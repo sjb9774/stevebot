@@ -1,0 +1,12 @@
+{
+  "name": "stevebot",
+  "version": "1.0.0",
+  "description": "A tiny twitch chat framework that seeks to make making simple bots simply",
+  "main": "setup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Stephen Biston",
+  "license": "ISC"
+}
