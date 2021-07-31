@@ -20,66 +20,24 @@ var currentMessage = {
 class CommandManager {
 
     constructor() {
-        this.commands = [];
+        this.handlers = [];
         this.resultHandler = (x) => x;
     }
 
-    register(command, identifier, tags=[]) {
-        this.commands.push({
-           command: command,
-           identifier: identifier,
-           tags: tags
-        });
-        return true;
+    registerHandler(handler) {
+        this.handlers.push(handler);
     }
 
-    unregister(tag) {
-        const matchingIndex = this.commands.reduce((commandData, currentValue, index) => {
-            if (currentValue !== -1) {
-                return currentValue;
-            }
-            if (commandData.tags.indexOf(tag) !== -1) {
-                return index;
-            }
-            return -1;
-        }, -1);
-
-        if (matchingIndex !== -1) {
-            this.commands.splice(matchingIndex, 1);
-            return true;
-        }
-        return false;
-    }
 
     setResultHandler(handler) {
         this.resultHandler = handler;
     }
 
     dispatch(commandMessage) {
-        this.commands.forEach((commandData) => {
-            if (this.identify(commandMessage, commandData)) {
-                const args = this.parseArgs(commandMessage);
-                const result = commandData.command.execute(...args);
-                this.resultHandler(result, commandMessage, commandData);
-            }
-        });
-    }
-
-    identify(commandMessage, commandData) {
-        if (typeof commandData.identifier === "function") {
-            return commandData.identifier(commandMessage);
-        }
-        return commandMessage.startsWith(commandData.identifier);
-    }
-
-    parseArgs(message) {
-        return message.split(' ');
-    }
-
-    messageMatchesAnyCommand(message) {
-        return this.commands.reduce((commandData, currentValue) => {
-            return this.identify(message, commandData) || currentValue;
-        }, false);
+        this.handlers.forEach((handler) => {
+            const result = handler(commandMessage, this.resultHandler.bind(this));
+            this.resultHandler(result, commandMessage, handler);
+        })
     }
 
     consume(message) {
@@ -127,12 +85,54 @@ COMMAND_PERMISSIONS = {
     }
 }
 
-manager = new CommandManager();
+class CommonCommandHandler {
+
+    constructor() {
+        this.commands = [];
+        this.resultHandler = (x) => x;
+    }
+
+    add(execute, identifier, tags=[]) {
+        const cmd = new BotCommand(execute);
+        this.commands.push({
+            command: cmd,
+            identifier: identifier,
+            tags: tags
+         });
+         return true;
+    }
+    
+    parseArgs(message) {
+        return message.split(' ');
+    }
+
+    identify(commandMessage, commandData) {
+        if (typeof commandData.identifier === "function") {
+            return commandData.identifier(commandMessage);
+        }
+        return commandMessage.startsWith(commandData.identifier);
+    }
+
+    dispatch(commandMessage, resultHandler) {
+        this.commands.forEach((commandData) => {
+            if (this.identify(commandMessage, commandData)) {
+                const args = this.parseArgs(commandMessage);
+                const result = commandData.command.execute(...args);
+                resultHandler(result, commandMessage, commandData);
+            }
+        });
+    }
+}
+
+const commonHandler = new CommonCommandHandler();
+const manager = new CommandManager();
+manager.registerHandler(commonHandler.dispatch.bind(commonHandler));
+
 module.exports = {
     manager: manager,
     createCommand: (executeFunction, invoker, tags=[]) => {
         const cmd = new BotCommand(executeFunction);
-        return manager.register(cmd, invoker, tags);
+        return commonHandler.add(executeFunction, invoker, tags)
     },
     getCurrentMessageContext: messageContext,
     permissions: COMMAND_PERMISSIONS
