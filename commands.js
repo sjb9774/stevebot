@@ -122,18 +122,15 @@ class CommonCommandHandler {
             }
         });
     }
+
+    createCommand(executeFunction, invoker, tags=[]) {
+        return this.add(executeFunction, invoker, tags);
+    }
 }
 
-const commonHandler = new CommonCommandHandler();
-const manager = new CommandManager();
-manager.registerHandler(commonHandler.dispatch.bind(commonHandler));
-
 module.exports = {
-    manager: manager,
-    createCommand: (executeFunction, invoker, tags=[]) => {
-        const cmd = new BotCommand(executeFunction);
-        return commonHandler.add(executeFunction, invoker, tags)
-    },
+    CommandManager,
+    CommonCommandHandler,
     getCurrentMessageContext: messageContext,
     permissions: COMMAND_PERMISSIONS
 }
