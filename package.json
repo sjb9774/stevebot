@@ -2,11 +2,19 @@
   "name": "stevebot",
   "version": "0.0.1",
   "description": "A tiny twitch chat framework that seeks to make making simple bots simply",
-  "main": "setup.js",
+  "main": "bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Stephen Biston",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sjb9774/stevebot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sjb9774/stevebot/issues"
+  },
+  "homepage": "https://github.com/sjb9774/stevebot#readme"
 }

@@ -52,4 +52,4 @@ function setup() {
     exports.manager = commands.manager;
     return commands.manager;
 }
-setup();
+// setup();
