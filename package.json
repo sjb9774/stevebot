@@ -1,6 +1,6 @@
 {
   "name": "stevebot",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A tiny twitch chat framework that seeks to make making simple bots simply",
   "main": "bot.js",
   "scripts": {
