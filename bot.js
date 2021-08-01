@@ -53,14 +53,16 @@ class Bot {
         // tags: optional, arbitrary descriptive tags used for simple command disabling
         finalCommandFiles.forEach((file) => {
             const cmd = require(`${this.commandsDir}${file}`);
-            const defaultResolver = (...x) => x;
+            const defaultResolver = ({args}) => args.slice(1);
             const argResolver = cmd.argResolver || defaultResolver;
             const wrappedExecute = (...args) => {
                 const permFunction = () => (cmd.permission || permissions.ALL)(...args);
-                args = argResolver(...args);
+                const contextObj = args[args.length - 1]
+                let rest = args.slice(0, -1)
+                rest = argResolver({args: rest, ...contextObj});
                 const isPermitted = this.globalPermission(permFunction, ...args);
                 if (isPermitted) {
-                    let result = cmd.executeFunction(...args);
+                    let result = cmd.executeFunction(...rest, contextObj);
                     return result;
                 }
                 return "You do not have permission to execute this command";

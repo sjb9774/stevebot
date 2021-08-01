@@ -3,8 +3,8 @@ class BotCommand {
         this.executeFunction = executeFunction;
     }
 
-    execute(getCurrentMessageContext, ...rest) {
-        return this.executeFunction(getCurrentMessageContext, ...rest);
+    execute(...rest) {
+        return this.executeFunction(...rest);
     }
 }
 
@@ -43,8 +43,16 @@ class CommandManager {
 
     dispatch(commandMessage) {
         this.handlers.forEach((handler) => {
-            const result = handler(commandMessage, this.resultHandler.bind(this), this.say, this.listen, this.getCurrentMessageContext.bind(this));
-            this.resultHandler(result, commandMessage, this.say, this.listen, handler);
+            let handlerParams = {
+                commandMessage,
+                resultHandler: this.resultHandler.bind(this),
+                say: this.say,
+                listen: this.listen,
+                messageContext: this.getCurrentMessageContext(),
+                getCurrentMessageContext: this.getCurrentMessageContext.bind(this)
+            }
+            const result = handler(handlerParams);
+            this.resultHandler({result, ...handlerParams});
         })
     }
 
@@ -121,12 +129,12 @@ class CommonCommandHandler {
         return commandMessage.startsWith(commandData.identifier);
     }
 
-    dispatch(commandMessage, resultHandler, say, listen, getCurrentMessageContext) {
+    dispatch({commandMessage, resultHandler, say, listen, getCurrentMessageContext}) {
         this.commands.forEach((commandData) => {
             if (this.identify(commandMessage, commandData)) {
                 const args = this.parseArgs(commandMessage);
-                const result = commandData.command.execute(getCurrentMessageContext, ...args);
-                resultHandler(result, commandMessage, say, listen);
+                const result = commandData.command.execute(...args, {getCurrentMessageContext, say, listen});
+                resultHandler({result, commandMessage, say, listen});
             }
         });
     }
