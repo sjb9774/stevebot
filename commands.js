@@ -3,8 +3,8 @@ class BotCommand {
         this.executeFunction = executeFunction;
     }
 
-    execute(command, ...rest) {
-        return this.executeFunction(...rest);
+    execute(getCurrentMessageContext, ...rest) {
+        return this.executeFunction(getCurrentMessageContext, ...rest);
     }
 }
 
@@ -19,9 +19,17 @@ var currentMessage = {
 
 class CommandManager {
 
-    constructor() {
+    constructor(say, listen) {
         this.handlers = [];
         this.resultHandler = (x) => x;
+        this.say = say;
+        this.listen = listen;
+        this.currentMessage = {
+            channel: null,
+            target: null,
+            user: null,
+            rawMessage: null
+        }
     }
 
     registerHandler(handler) {
@@ -35,8 +43,8 @@ class CommandManager {
 
     dispatch(commandMessage) {
         this.handlers.forEach((handler) => {
-            const result = handler(commandMessage, this.resultHandler.bind(this));
-            this.resultHandler(result, commandMessage, handler);
+            const result = handler(commandMessage, this.resultHandler.bind(this), this.say, this.listen, this.getCurrentMessageContext.bind(this));
+            this.resultHandler(result, commandMessage, this.say, this.listen, handler);
         })
     }
 
@@ -44,14 +52,18 @@ class CommandManager {
         return this.dispatch(message);
     }
 
+    getCurrentMessageContext() {
+        return this.currentMessage;
+    }
+
     onMessage(target, context, msg, self) {
         if (self) {
             return;
         }
-        currentMessage = context;
+        this.currentMessage = context;
         // add this to the normal context object and alias for intuitive use
-        currentMessage.target = target;
-        currentMessage.channel = target;
+        this.currentMessage.target = target;
+        this.currentMessage.channel = target;
         try {
             this.consume(msg);
         } catch (err) {
@@ -60,10 +72,6 @@ class CommandManager {
     }
 }
 
-const messageContext = () => {
-    // see onMessage method for where this populated
-    return currentMessage;
-}
 
 COMMAND_PERMISSIONS = {
     BROADCASTER: () => {
@@ -113,12 +121,12 @@ class CommonCommandHandler {
         return commandMessage.startsWith(commandData.identifier);
     }
 
-    dispatch(commandMessage, resultHandler) {
+    dispatch(commandMessage, resultHandler, say, listen, getCurrentMessageContext) {
         this.commands.forEach((commandData) => {
             if (this.identify(commandMessage, commandData)) {
                 const args = this.parseArgs(commandMessage);
-                const result = commandData.command.execute(...args);
-                resultHandler(result, commandMessage, commandData);
+                const result = commandData.command.execute(getCurrentMessageContext, ...args);
+                resultHandler(result, commandMessage, say, listen);
             }
         });
     }
@@ -131,6 +139,5 @@ class CommonCommandHandler {
 module.exports = {
     CommandManager,
     CommonCommandHandler,
-    getCurrentMessageContext: messageContext,
     permissions: COMMAND_PERMISSIONS
 }

@@ -1,4 +1,4 @@
-const {permissions, CommandManager, CommonCommandHandler, getCurrentMessageContext} = require(`./commands.js`);
+const {permissions, CommandManager, CommonCommandHandler} = require(`./commands.js`);
 const dir = `${require.main.path}`;
 
 const fs = require('fs');
@@ -18,10 +18,12 @@ function getFinalCommandList() {
 
 class Bot {
 
-    constructor({commandsDir=null, globalPermission=null, commandPreSetupHook=null}) {
+    constructor({commandsDir=null, globalPermission=null, commandPreSetupHook=null, say=null, listen=null}) {
         this.commandsDir = commandsDir || `${dir}/commands/`;
         this.globalPermission = globalPermission;
         this.commandPreSetupHook = commandPreSetupHook;
+        this.say = say;
+        this.listen = listen;
         this.setup();
     }
 
@@ -32,9 +34,13 @@ class Bot {
     getManager() {
         return this.manager;
     }
+    
+    getCurrentMessageContext() {
+        return this.getManager().getCurrentMessageContext()
+    }
 
     setup() {
-        this.manager = new CommandManager();
+        this.manager = new CommandManager(this.say, this.listen);
         this.handler = new CommonCommandHandler();
         this.manager.registerHandler(this.handler.dispatch.bind(this.handler));
 
@@ -65,8 +71,26 @@ class Bot {
 
 }
 
+class SimpleBot extends Bot {
+    constructor({commandsDir=null, globalPermission=null, commandPreSetupHook=null}) {
+        super(commandsDir, globalPermission, commandPreSetupHook);
+        this.client = null;
+    }
+
+    login(username, password, channel) {
+
+    }
+
+    say(message) {
+
+    }
+
+    listen(onMessage) {
+
+    }
+}
+
 var exports = {
-    getCurrentMessageContext: getCurrentMessageContext,
     getFinalCommandModules: () => getFinalCommandList().map((filename) => require(`${dir}/commands/${filename}`)),
     Bot: Bot,
     permissions: permissions
